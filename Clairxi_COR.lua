@@ -1,17 +1,3 @@
--------------------------------------------------------------------------------------------------------------------
--- Setup functions for this job.  Generally should not be modified.
--------------------------------------------------------------------------------------------------------------------
-
---[[
-    gs c toggle LuzafRing -- Toggles use of Luzaf Ring on and off
-    
-    Offense mode is melee or ranged.  Used ranged offense mode if you are engaged
-    for ranged weaponskills, but not actually meleeing.
-    
-    Weaponskill mode, if set to 'Normal', is handled separately for melee and ranged weaponskills.
---]]
-
-
 -- Initialization function for this job file.
 function get_sets()
     mote_include_version = 2
@@ -24,19 +10,11 @@ end
 function job_setup()
     -- Whether to use Luzaf's Ring
     state.LuzafRing = M(false, "Luzaf's Ring")
-    -- Whether a warning has been given for low ammo
-    state.warned = M(false)
     state.HasteMode = M{['description']='Haste Mode', 'Normal', 'Hi'}
-    -- update_combat_form()
 
     define_roll_values()
 
-    -- determine_haste_group()
 end
-
--------------------------------------------------------------------------------------------------------------------
--- User setup functions for this job.  Recommend that these be overridden in a sidecar file.
--------------------------------------------------------------------------------------------------------------------
 
 -- Setup vars that are user-dependent.  Can override this function in a sidecar file.
 function user_setup()
@@ -44,41 +22,43 @@ function user_setup()
     state.HybridMode:options('Normal','PDT')
     state.WeaponskillMode:options('Normal', 'Acc')
     state.RangedMode:options('Normal', 'Acc')
-    state.CastingMode:options('Normal', 'Resistant')
     state.IdleMode:options('Normal', 'PDT', 'Refresh')
 
-    -- Additional local binds
+-- Additional local binds
 
     state.flurrymode = M{['description'] = 'Flurry Mode'}
     state.flurrymode:options('Flurry','FlurryII')
+
+    state.QDmode = M{['description'] = 'Quick Draw Mode'}
+    state.QDmode:options('Normal','Damage')
  
     send_command('bind ^` gs c cycle flurrymode')
     send_command('bind ^z input /ra <t>')
+    send_command('bind ^- gs c cycle LuzafRing')
+    send_command('bind ^= gs c cycle QDmode')
     determine_haste_group()
 
     select_default_macro_book()
 end
 
-
 -- Called when this job file is unloaded (eg: job change)
 function user_unload()
     send_command('unbind ^`')
-    send_command('unbind !`')
-    send_command('unbind !z')
+    send_command('unbind ^z')
+    send_command('unbind ^-')
+    send_command('unbind ^=')
 end
 
 -- Define sets and vars used by this job file.
 function init_gear_sets()
-    --------------------------------------
-    -- Start defining the sets
-    
-    -- Precast Sets
 
-    -- Precast sets to enhance JAs
-    
-    RangedWeaponskills = S{'Hot Shot', 'Split Shot','Sniper Shot','Slug Shot','Blast Shot','Heavy Shot','Detonator','Numbing Shot','Last Stand','Coronach','Wildfire','Trueflight','Leaden Salute'}
+--------------------------------------
+-- LET THE GEARSWAPING BEGIN!
+--------------------------------------
+--------------------------------------------------------------------------------------------------------------------------
+--             CORSAIR SPECIFIC JOB ABILITIES                 --
+--------------------------------------------------------------------------------------------------------------------------
 
-    sets.precast = {}
     sets.precast['Snake Eye'] = {legs={ name="Lanun Trews +2", augments={'Enhances "Snake Eye" effect',}},}
     sets.precast['Wild Card'] = {feet={ name="Lanun Bottes +3", augments={'Enhances "Wild Card" effect',}},}
     sets.precast['Random Deal'] = {body={ name="Lanun Frac +3", augments={'Enhances "Loaded Deck" effect',}},}
@@ -96,76 +76,80 @@ function init_gear_sets()
         neck="Regal Necklace",
         back={ name="Camulus's Mantle", augments={'HP+60','Eva.+20 /Mag. Eva.+20','Mag. Evasion+10','"Fast Cast"+10',}},}
     
-    -- sets.precast['Spectral Jig'] = sets.precast.CorsairRoll
-    
     sets.precast["Caster's Roll"] = set_combine(sets.precast.CorsairRoll, {legs="Chasseur's Culottes +1"})
     sets.precast["Courser's Roll"] = set_combine(sets.precast.CorsairRoll, {feet="Chass. Bottes +1"})
     sets.precast["Blitzer's Roll"] = set_combine(sets.precast.CorsairRoll, {head="Chass. Tricorne +1"})
     sets.precast["Tactician\'s Roll"] = set_combine(sets.precast.CorsairRoll, {body="Chasseur's Frac +1"})
     sets.precast["Allies' Roll"] = set_combine(sets.precast.CorsairRoll, {hands="Chasseur's Gants +1",})
 
+    -- IF Luzaf Ring Mode is active it will do a set_combine with the ring. Otherwise does not usually attach.
     sets.precast.LuzafRing = {ring2="Luzaf's Ring"}
-    sets.precast.FoldDoubleBust = {hands={ name="Lanun Gants +2", augments={'Enhances "Fold" effect',}},}
-    
+
+    --This is for your elemental shot builds.
+
+    --Normal is going to be for Store TP to allow you to get more TP when you use your elemental Shots
     sets.precast.CorsairShot = {ammo="Devastating Bullet",
-        head="Mummu Bonnet +2",
+	    head={ name="Herculean Helm", augments={'Accuracy+22','"Store TP"+2','DEX+13','Attack+5',}},
+	    body="Malignance Tabard",
+	    hands="Malignance Gloves",
+	    legs="Malignance Tights",
+	    feet="Malignance Boots",
+	    neck="Combatant's Torque",
+	    waist="Yemaya Belt",
+	    left_ear="Telos Earring",
+	    right_ear="Digni. Earring",
+	    left_ring={ name="Metamor. Ring +1", augments={'Path: A',}},
+	    right_ring="Ilabrat Ring",
+	    back={ name="Camulus's Mantle", augments={'AGI+20','Rng.Acc.+20 Rng.Atk.+20','"Store TP"+10',}},}
+
+    -- If you are needing to do Damage or to use your AF Head and Empyrean Boots here.
+    sets.precast.CorsairShot.Damage = {ammo="Living Bullet",
+	    head="Chass. Tricorne +1",
+	    body={ name="Lanun Frac +3", augments={'Enhances "Loaded Deck" effect',}},
+	    hands={ name="Carmine Fin. Ga. +1", augments={'Rng.Atk.+20','"Mag.Atk.Bns."+12','"Store TP"+6',}},
+	    legs={ name="Herculean Trousers", augments={'Mag. Acc.+18 "Mag.Atk.Bns."+18','Mag. Acc.+15','"Mag.Atk.Bns."+15',}},
+	    feet="Laksa. Bottes +3",
+	    neck="Sanctity Necklace",
+	    waist=gear.ElementalObi,
+	    left_ear="Novio Earring",
+	    right_ear="Friomisi Earring",
+	    left_ring="Shiva Ring +1",
+	    right_ring="Dingir Ring",
+	    back={ name="Camulus's Mantle", augments={'AGI+20','Mag. Acc+20 /Mag. Dmg.+20','Mag. Acc.+10','"Mag.Atk.Bns."+10',}},}
+
+    -- Magic Accurary build for Light Shot & Dark Shot due to wanting them to land on higher level monsters
+    sets.precast.CorsairShot['Light Shot'] = {ammo="Devastating Bullet",
+        head="Laksa. Tricorne +3",
         body={ name="Lanun Frac +3", augments={'Enhances "Loaded Deck" effect',}},
-        hands="Malignance Gloves",
-        legs={ name="Herculean Trousers", augments={'Mag. Acc.+18 "Mag.Atk.Bns."+18','Mag. Acc.+15','"Mag.Atk.Bns."+15',}},
+        hands={ name="Herculean Gloves", augments={'Attack+15','Weapon skill damage +2%','Mag. Acc.+20 "Mag.Atk.Bns."+20',}},
+        legs={ name="Herculean Trousers", augments={'"Fast Cast"+2','Mag. Acc.+20 "Mag.Atk.Bns."+20',}},
         feet="Laksa. Boots +3",
         neck="Sanctity Necklace",
         waist=gear.ElementalObi,
         left_ear="Gwati Earring",
         right_ear="Digni. Earring",
         left_ring="Stikini Ring",
-        right_ring="Dingir Ring",
+        right_ring="Stikini Ring",
         back={ name="Camulus's Mantle", augments={'AGI+20','Mag. Acc+20 /Mag. Dmg.+20','Mag. Acc.+10','"Mag.Atk.Bns."+10',}},}
 
-    -- sets.midcast.CorsairShot.Acc = set_combine(sets.midcast.CorsairShot, {ring2="Locus Ring", ring1="Mujin Band"})
-        
-    -- sets.precast.CorsairShot.TPShot = {head="Laksa. Tricorne +3",
-    --     body="Mummu Jacket +2",
-    --     hands="Mummu Wrists +2",
-    --     legs="Chas. Culottes +1",
-    --     feet="Laksa. Boots +3",
-    --     neck="Combatant's Torque",
-    --     waist="Reiki Yotai",
-    --     left_ear="Enervating Earring",
-    --     right_ear="Telos Earring",
-    --     left_ring="Ilabrat Ring",
-    --     right_ring="Petrov Ring",
-    --     back={ name="Camulus's Mantle", augments={'AGI+20','Rng.Acc.+20 Rng.Atk.+20','"Store TP"+10',}},}
+    -- Don't forget that there are specific equipment for Dark Affinity
+    sets.precast.CorsairShot['Dark Shot'] = {ammo="Devastating Bullet",
+        head="Laksa. Tricorne +3",
+        body={ name="Lanun Frac +3", augments={'Enhances "Loaded Deck" effect',}},
+        hands={ name="Herculean Gloves", augments={'Attack+15','Weapon skill damage +2%','Mag. Acc.+20 "Mag.Atk.Bns."+20',}},
+        legs={ name="Herculean Trousers", augments={'"Fast Cast"+2','Mag. Acc.+20 "Mag.Atk.Bns."+20',}},
+        feet="Laksa. Boots +3",
+        neck="Sanctity Necklace",
+        waist=gear.ElementalObi,
+        left_ear="Gwati Earring",
+        right_ear="Digni. Earring",
+        left_ring="Stikini Ring",
+        right_ring="Archon Ring",
+        back={ name="Camulus's Mantle", augments={'AGI+20','Mag. Acc+20 /Mag. Dmg.+20','Mag. Acc.+10','"Mag.Atk.Bns."+10',}},}
 
-    -- sets.precast['Light Shot'] = {ammo="Devastating Bullet",
-    --     head="Laksa. Tricorne +3",
-    --     body={ name="Lanun Frac +3", augments={'Enhances "Loaded Deck" effect',}},
-    --     hands={ name="Herculean Gloves", augments={'Attack+15','Weapon skill damage +2%','Mag. Acc.+20 "Mag.Atk.Bns."+20',}},
-    --     legs={ name="Herculean Trousers", augments={'"Fast Cast"+2','Mag. Acc.+20 "Mag.Atk.Bns."+20',}},
-    --     feet="Laksa. Boots +3",
-    --     neck="Sanctity Necklace",
-    --     waist=gear.ElementalObi,
-    --     left_ear="Gwati Earring",
-    --     right_ear="Digni. Earring",
-    --     left_ring="Stikini Ring",
-    --     right_ring="Stikini Ring",
-    --     back={ name="Camulus's Mantle", augments={'AGI+20','Mag. Acc+20 /Mag. Dmg.+20','Mag. Acc.+10','"Mag.Atk.Bns."+10',}},}
-
-    -- sets.precast['Dark Shot'] = {ammo="Devastating Bullet",
-    --     head="Laksa. Tricorne +3",
-    --     body={ name="Lanun Frac +3", augments={'Enhances "Loaded Deck" effect',}},
-    --     hands={ name="Herculean Gloves", augments={'Attack+15','Weapon skill damage +2%','Mag. Acc.+20 "Mag.Atk.Bns."+20',}},
-    --     legs={ name="Herculean Trousers", augments={'"Fast Cast"+2','Mag. Acc.+20 "Mag.Atk.Bns."+20',}},
-    --     feet="Laksa. Boots +3",
-    --     neck="Sanctity Necklace",
-    --     waist=gear.ElementalObi,
-    --     left_ear="Gwati Earring",
-    --     right_ear="Digni. Earring",
-    --     left_ring="Stikini Ring",
-    --     right_ring="Archon Ring",
-    --     back={ name="Camulus's Mantle", augments={'AGI+20','Mag. Acc+20 /Mag. Dmg.+20','Mag. Acc.+10','"Mag.Atk.Bns."+10',}},}
-
-    -- sets.precast['Dark Shot'].TPShot = sets.midcast['Dark Shot']
-    -- sets.precast['Light Shot'].TPShot = sets.midcast['Light Shot']
+--------------------------------------------------------------------------------------------------------------------------
+--             SUBJOB SPECIFIC JOB ABILITIES                 --
+--------------------------------------------------------------------------------------------------------------------------
     
     sets.precast.Waltz = {head="Mummu Bonnet +2",
         body="Passion Jacket",
@@ -178,60 +162,13 @@ function init_gear_sets()
         left_ring="Asklepian Ring",
         right_ring="Valseur's Ring",
         back={ name="Camulus's Mantle", augments={'HP+60','Eva.+20 /Mag. Eva.+20','Mag. Evasion+10','"Fast Cast"+10',}},}
-    
-    sets.precast.FC = {head={ name="Carmine Mask +1", augments={'Accuracy+20','Mag. Acc.+12','"Fast Cast"+4',}},
-        body={ name="Samnuha Coat", augments={'Mag. Acc.+15','"Mag.Atk.Bns."+15','"Fast Cast"+5','"Dual Wield"+5',}},
-        hands={ name="Leyline Gloves", augments={'Accuracy+9','Mag. Acc.+5','"Mag.Atk.Bns."+6','"Fast Cast"+1',}},
-        legs={ name="Rawhide Trousers", augments={'MP+50','"Fast Cast"+5','"Refresh"+1',}},
-        feet={ name="Carmine Greaves +1", augments={'HP+80','MP+80','Phys. dmg. taken -4',}},
-        neck="Baetyl Pendant",
-        left_ear="Loquac. Earring",
-        right_ear="Etiolation Earring",
-        left_ring="Kishar Ring",
-        right_ring="Prolix Ring",
-        back={ name="Camulus's Mantle", augments={'HP+60','Eva.+20 /Mag. Eva.+20','Mag. Evasion+10','"Fast Cast"+10',}},}
 
-    sets.precast.FC.Utsusemi = {head={ name="Carmine Mask +1", augments={'Accuracy+20','Mag. Acc.+12','"Fast Cast"+4',}},
-        body="Passion Jacket",
-        hands={ name="Leyline Gloves", augments={'Accuracy+9','Mag. Acc.+5','"Mag.Atk.Bns."+6','"Fast Cast"+1',}},
-        legs={ name="Rawhide Trousers", augments={'MP+50','"Fast Cast"+5','"Refresh"+1',}},
-        feet={ name="Carmine Greaves +1", augments={'HP+80','MP+80','Phys. dmg. taken -4',}},
-        neck="Magoraga Beads",
-        left_ear="Loquac. Earring",
-        right_ear="Etiolation Earring",
-        left_ring="Kishar Ring",
-        right_ring="Prolix Ring",
-        back={ name="Camulus's Mantle", augments={'HP+60','Eva.+20 /Mag. Eva.+20','Mag. Evasion+10','"Fast Cast"+10',}},}
+--------------------------------------------------------------------------------------------------------------------------
+--             WEAPONSKILL SETS                 --
+--------------------------------------------------------------------------------------------------------------------------
 
-    sets.precast.RA = {ammo="Devastating Bullet",
-        head={ name="Taeon Chapeau", augments={'"Snapshot"+4','"Snapshot"+4',}},
-        body="Oshosi Vest",
-        hands={ name="Carmine Fin. Ga. +1", augments={'Rng.Atk.+20','"Mag.Atk.Bns."+12','"Store TP"+6',}},
-        legs="Laksa. Trews +3",
-        feet="Meg. Jam. +2",
-        waist="Impulse Belt",
-        back={ name="Camulus's Mantle", augments={'AGI+20','Rng.Acc.+20 Rng.Atk.+20','"Snapshot"+10',}},}
+ --Any set that is determined as .Acc will automatically switch to Accuracy when Offensive Mode is in Acc 
 
-    sets.precast.RA.Flurry = {ammo="Devastating Bullet",
-        head="Chass. Tricorne +1",
-        body="Oshosi Vest",
-        hands="Mrigavyadha Gloves",
-        legs="Laksa. Trews +3",
-        feet="Meg. Jam. +2",
-        waist="Yemaya Belt",
-        back={ name="Camulus's Mantle", augments={'AGI+20','Rng.Acc.+20 Rng.Atk.+20','"Snapshot"+10',}},}
-
-    sets.precast.RA.FlurryTwo = {ammo="Devastating Bullet",
-        head="Chass. Tricorne +1",
-        body="Laksa. Frac +3",
-        hands="Mrigavyadha Gloves",
-        legs="Laksa. Trews +3",
-        feet="Meg. Jam. +2",
-        waist="Yemaya Belt",
-        back={ name="Camulus's Mantle", augments={'AGI+20','Rng.Acc.+20 Rng.Atk.+20','"Snapshot"+10',}},}
-
-       
-    -- Weaponskill sets
     -- Default set for any weaponskill that isn't any more specifically defined
     sets.Obi = {waist="Hachirin-no-Obi"}
     gear.default.obi_waist = "Eschan Stone"
@@ -251,7 +188,6 @@ function init_gear_sets()
 
     sets.precast.WS.Acc = {}
 
-
     -- Specific weaponskill sets.  Uses the base set if an appropriate WSMod version isn't found.
     sets.precast.WS['Evisceration'] = {head={ name="Adhemar Bonnet +1", augments={'DEX+12','AGI+12','Accuracy+20',}},
         body="Meg. Cuirie +2",
@@ -269,6 +205,20 @@ function init_gear_sets()
 
     sets.precast.WS['Exenterator'] = sets.precast.WS
     sets.precast.WS['Exenterator'].Acc = sets.precast.WS.Acc
+
+    sets.precast.WS['Slug Shot'] = {ammo="Chrono Bullet",
+        head="Meghanada Visor +2",
+        body="Laksa. Frac +3",
+        hands="Meg. Gloves +2",
+        legs="Meg. Chausses +2",
+        feet={ name="Lanun Bottes +3", augments={'Enhances "Wild Card" effect',}},
+        neck="Fotia Gorget",
+        waist="Fotia Belt",
+        left_ear={ name="Moonshade Earring", augments={'Accuracy+4','TP Bonus +250',}},
+        right_ear="Telos Earring",
+        left_ring="Dingir Ring",
+        right_ring="Regal Ring",
+        back={ name="Camulus's Mantle", augments={'AGI+20','Rng.Acc.+20 Rng.Atk.+20','AGI+10','Weapon skill damage +10%',}},}
 
     sets.precast.WS['Last Stand'] = {ammo="Chrono Bullet",
         head="Meghanada Visor +2",
@@ -405,63 +355,47 @@ function init_gear_sets()
         left_ring="Rufescent Ring",
         right_ring="Regal Ring",
         back={ name="Camulus's Mantle", augments={'STR+20','Accuracy+20 Attack+20','STR+10','Weapon skill damage +10%',}},}
-    
-    sets.midcast = {}
-    
-    -- Midcast Sets
-    sets.midcast.FastRecast = sets.precast.FC
-        
-    -- Specific spells
-    sets.midcast.Utsusemi = sets.midcast.FastRecast
 
-    sets.midcast['Cure'] = {}
-    sets.midcast['Cure II'] = sets.midcast['Cure']
-    sets.midcast['Cure III'] = sets.midcast['Cure']
-    sets.midcast['Cure IV'] = sets.midcast['Cure']
+--------------------------------------------------------------------------------------------------------------------------
+--            PRECAST RANGED ABILITIES                 --
+--------------------------------------------------------------------------------------------------------------------------
 
-    -- Ranged gear
+	-- Snapshot caps at 70% & Rapid Shot caps at 99% (as Rapid Shot is a chance for it to proc not a consistant thing)
+		-- If a Master Corsair, Snapshot caps at 60%
+    sets.precast.RA = {ammo="Devastating Bullet",
+        head={ name="Taeon Chapeau", augments={'"Snapshot"+4','"Snapshot"+4',}},
+        body="Oshosi Vest",
+        hands={ name="Carmine Fin. Ga. +1", augments={'Rng.Atk.+20','"Mag.Atk.Bns."+12','"Store TP"+6',}},
+        legs="Laksa. Trews +3",
+        feet="Meg. Jam. +2",
+        waist="Impulse Belt",
+        back={ name="Camulus's Mantle", augments={'AGI+20','Rng.Acc.+20 Rng.Atk.+20','"Snapshot"+10',}},}
+
+    sets.precast.RA.Flurry = {ammo="Devastating Bullet",
+        head="Chass. Tricorne +1",
+        body="Oshosi Vest",
+        hands="Mrigavyadha Gloves",
+        legs="Laksa. Trews +3",
+        feet="Meg. Jam. +2",
+        waist="Yemaya Belt",
+        back={ name="Camulus's Mantle", augments={'AGI+20','Rng.Acc.+20 Rng.Atk.+20','"Snapshot"+10',}},}
+
+    sets.precast.RA.FlurryTwo = {ammo="Devastating Bullet",
+        head="Chass. Tricorne +1",
+        body="Laksa. Frac +3",
+        hands="Mrigavyadha Gloves",
+        legs="Laksa. Trews +3",
+        feet="Meg. Jam. +2",
+        waist="Yemaya Belt",
+        back={ name="Camulus's Mantle", augments={'AGI+20','Rng.Acc.+20 Rng.Atk.+20','"Snapshot"+10',}},}
+
+--------------------------------------------------------------------------------------------------------------------------
+--            MIDCAST RANGED ABILITIES                 --
+--------------------------------------------------------------------------------------------------------------------------
+
     sets.midcast.RA = {ammo="Devastating Bullet",
         head="Meghanada Visor +2",
         body="Malignance Tabard",
-        hands={ name="Carmine Fin. Ga. +1", augments={'Rng.Atk.+20','"Mag.Atk.Bns."+12','"Store TP"+6',}},
-        legs="Mummu Kecks +2",
-        feet={ name="Lanun Bottes +3", augments={'Enhances "Wild Card" effect',}},
-        neck="Iskur Gorget",
-        waist="Yemaya Belt",
-        left_ear="Enervating Earring",
-        right_ear="Telos Earring",
-        left_ring="Dingir Ring",
-        right_ring="Regal Ring",
-        back={ name="Camulus's Mantle", augments={'AGI+20','Rng.Acc.+20 Rng.Atk.+20','"Store TP"+10',}},}
-
-    sets.TripleShot = {head="Oshosi Mask",
-        body="Oshosi Vest",
-        hands="Oshosi Gloves",
-        legs="Oshosi Trousers",
-        feet="Oshosi Leggings",
-        neck="Iskur Gorget",
-        waist="Yemaya Belt",
-        left_ear="Enervating Earring",
-        right_ear="Telos Earring",
-        left_ring="Dingir Ring",
-        right_ring="Regal Ring",
-        back={ name="Camulus's Mantle", augments={'AGI+20','Rng.Acc.+20 Rng.Atk.+20','"Store TP"+10',}},}
-
-    sets.TripleShotCritical = {head="Oshosi Mask",
-        body="Oshosi Vest",
-        hands="Mummu Wrists +2",
-        legs="Mummu Kecks +2",
-        feet="Oshosi Leggings",
-        neck="Iskur Gorget",
-        waist="Yemaya Belt",
-        left_ear="Enervating Earring",
-        right_ear="Telos Earring",
-        left_ring="Dingir Ring",
-        right_ring="Regal Ring",
-        back={ name="Camulus's Mantle", augments={'AGI+20','Rng.Acc.+20 Rng.Atk.+20','"Store TP"+10',}},}
-
-    sets.midcast.RA.Critical = {head="Meghanada Visor +2",
-        body="Oshosi Vest",
         hands={ name="Carmine Fin. Ga. +1", augments={'Rng.Atk.+20','"Mag.Atk.Bns."+12','"Store TP"+6',}},
         legs="Mummu Kecks +2",
         feet={ name="Lanun Bottes +3", augments={'Enhances "Wild Card" effect',}},
@@ -486,63 +420,93 @@ function init_gear_sets()
         left_ring="Cacoethic Ring +1",
         right_ring="Regal Ring",
         back={ name="Camulus's Mantle", augments={'AGI+20','Rng.Acc.+20 Rng.Atk.+20','"Store TP"+10',}},}
-    
 
-    -- Idle sets
-    sets.idle = {head={ name="Dampening Tam", augments={'DEX+7','Accuracy+12','Mag. Acc.+2','Quadruple Attack +1',}},
-        body="Malignance Tabard",
-        hands="Malignance Gloves",
-        legs={ name="Carmine Cuisses +1", augments={'Accuracy+20','Attack+12','"Dual Wield"+6',}},
-        feet="Malignance Boots",
-        neck="Loricate Torque +1",
-        waist="Flume Belt +1",
-        left_ear="Genmei Earring",
-        right_ear="Etiolation Earring",
-        left_ring="Defending Ring",
-        right_ring="Karieyh Ring",
-        back={ name="Camulus's Mantle", augments={'DEX+20','Accuracy+20 Attack+20','Accuracy+10','"Dual Wield"+10','Damage taken-5%',}},}
-
-
-    sets.idle.PDT = {head={ name="Dampening Tam", augments={'DEX+7','Accuracy+12','Mag. Acc.+2','Quadruple Attack +1',}},
-        body="Malignance Tabard",
-        hands="Malignance Gloves",
+    -- This is wehn you have Aftermath active on Armageddon.
+    sets.midcast.RA.Critical = {head="Meghanada Visor +2",
+        body="Oshosi Vest",
+        hands={ name="Carmine Fin. Ga. +1", augments={'Rng.Atk.+20','"Mag.Atk.Bns."+12','"Store TP"+6',}},
         legs="Mummu Kecks +2",
-        feet="Malignance Boots",
-        neck="Loricate Torque +1",
-        waist="Flume Belt +1",
-        left_ear="Genmei Earring",
-        right_ear="Etiolation Earring",
-        left_ring="Defending Ring",
-        right_ring="Karieyh Ring",
-        back={ name="Camulus's Mantle", augments={'DEX+20','Accuracy+20 Attack+20','Accuracy+10','"Dual Wield"+10','Damage taken-5%',}},}
+        feet={ name="Lanun Bottes +3", augments={'Enhances "Wild Card" effect',}},
+        neck="Iskur Gorget",
+        waist="Yemaya Belt",
+        left_ear="Enervating Earring",
+        right_ear="Telos Earring",
+        left_ring="Dingir Ring",
+        right_ring="Regal Ring",
+        back={ name="Camulus's Mantle", augments={'AGI+20','Rng.Acc.+20 Rng.Atk.+20','"Store TP"+10',}},}
 
-     sets.idle.Refresh = {head="Rawhide Mask",
-        body="Malignance Tabard",
-        hands="Malignance Gloves",
+    -- This is when Triple Shot is active, any gear with Triple Shot+ should go here.
+    sets.TripleShot = {head="Oshosi Mask",
+        body="Oshosi Vest",
+        hands="Oshosi Gloves",
+        legs="Oshosi Trousers",
+        feet="Oshosi Leggings",
+        neck="Iskur Gorget",
+        waist="Yemaya Belt",
+        left_ear="Enervating Earring",
+        right_ear="Telos Earring",
+        left_ring="Dingir Ring",
+        right_ring="Regal Ring",
+        back={ name="Camulus's Mantle", augments={'AGI+20','Rng.Acc.+20 Rng.Atk.+20','"Store TP"+10',}},}
+
+    -- This set is for when you have Aftermath up with Armageddon & Triple Shot is active
+    sets.TripleShotCritical = {head="Oshosi Mask",
+        body="Oshosi Vest",
+        hands="Mummu Wrists +2",
+        legs="Mummu Kecks +2",
+        feet="Oshosi Leggings",
+        neck="Iskur Gorget",
+        waist="Yemaya Belt",
+        left_ear="Enervating Earring",
+        right_ear="Telos Earring",
+        left_ring="Dingir Ring",
+        right_ring="Regal Ring",
+        back={ name="Camulus's Mantle", augments={'AGI+20','Rng.Acc.+20 Rng.Atk.+20','"Store TP"+10',}},}
+
+--------------------------------------------------------------------------------------------------------------------------
+--             MAGIC SECTIONS FOR THAT POTENTIAL SUB RDM/WHM/SCH SETS                 --
+--------------------------------------------------------------------------------------------------------------------------
+
+    sets.precast.FC = {head={ name="Carmine Mask +1", augments={'Accuracy+20','Mag. Acc.+12','"Fast Cast"+4',}},
+        body={ name="Samnuha Coat", augments={'Mag. Acc.+15','"Mag.Atk.Bns."+15','"Fast Cast"+5','"Dual Wield"+5',}},
+        hands={ name="Leyline Gloves", augments={'Accuracy+9','Mag. Acc.+5','"Mag.Atk.Bns."+6','"Fast Cast"+1',}},
         legs={ name="Rawhide Trousers", augments={'MP+50','"Fast Cast"+5','"Refresh"+1',}},
-        feet="Malignance Boots",
-        neck="Loricate Torque +1",
-        waist="Flume Belt +1",
-        left_ear="Genmei Earring",
+        feet={ name="Carmine Greaves +1", augments={'HP+80','MP+80','Phys. dmg. taken -4',}},
+        neck="Baetyl Pendant",
+        left_ear="Loquac. Earring",
         right_ear="Etiolation Earring",
-        left_ring="Defending Ring",
-        right_ring="Karieyh Ring",
-        back={ name="Camulus's Mantle", augments={'DEX+20','Accuracy+20 Attack+20','Accuracy+10','"Dual Wield"+10','Damage taken-5%',}},}
-    
-    sets.aftercast = {}
-    
-    sets.aftercast.Idle = sets.idle
+        left_ring="Kishar Ring",
+        right_ring="Prolix Ring",
+        back={ name="Camulus's Mantle", augments={'HP+60','Eva.+20 /Mag. Eva.+20','Mag. Evasion+10','"Fast Cast"+10',}},}
 
-    sets.Kiting = {feet="Hermes' Sandals"}
-
-    -- Engaged sets
-
-    -- Variations for TP weapon and (optional) offense/defense modes.  Code will fall back on previous
-    -- sets if more refined versions aren't defined.
-    -- If you create a set with both offense and defense modes, the offense mode should be first.
-    -- EG: sets.engaged.Dagger.Accuracy.Evasion
+    sets.precast.FC.Utsusemi = {head={ name="Carmine Mask +1", augments={'Accuracy+20','Mag. Acc.+12','"Fast Cast"+4',}},
+        body="Passion Jacket",
+        hands={ name="Leyline Gloves", augments={'Accuracy+9','Mag. Acc.+5','"Mag.Atk.Bns."+6','"Fast Cast"+1',}},
+        legs={ name="Rawhide Trousers", augments={'MP+50','"Fast Cast"+5','"Refresh"+1',}},
+        feet={ name="Carmine Greaves +1", augments={'HP+80','MP+80','Phys. dmg. taken -4',}},
+        neck="Magoraga Beads",
+        left_ear="Loquac. Earring",
+        right_ear="Etiolation Earring",
+        left_ring="Kishar Ring",
+        right_ring="Prolix Ring",
+        back={ name="Camulus's Mantle", augments={'HP+60','Eva.+20 /Mag. Eva.+20','Mag. Evasion+10','"Fast Cast"+10',}},}  
     
-    -- Normal melee group
+    
+    sets.midcast.FastRecast = sets.precast.FC
+    sets.midcast.Utsusemi = sets.precast.FC
+
+    sets.midcast['Cure'] = {}
+    sets.midcast['Cure II'] = sets.midcast['Cure']
+    sets.midcast['Cure III'] = sets.midcast['Cure']
+    sets.midcast['Cure IV'] = sets.midcast['Cure']
+    
+--------------------------------------------------------------------------------------------------------------------------
+--             ENGAGED SETS                 --
+--------------------------------------------------------------------------------------------------------------------------
+    
+	-- This set is if you have no Buffs up providing you Haste or Delay - 
+	-- If /NIN - DW 49
+	-- If /DNC - DW 59
     sets.engaged = {head={ name="Adhemar Bonnet +1", augments={'DEX+12','AGI+12','Accuracy+20',}},
         body={ name="Adhemar Jacket +1", augments={'DEX+12','AGI+12','Accuracy+20',}},
         hands={ name="Adhemar Wrist. +1", augments={'DEX+12','AGI+12','Accuracy+20',}},
@@ -559,7 +523,7 @@ function init_gear_sets()
     sets.engaged.PDT = {head={ name="Dampening Tam", augments={'DEX+7','Accuracy+12','Mag. Acc.+2','Quadruple Attack +1',}},
         body="Malignance Tabard",
         hands="Malignance Gloves",
-        legs="Mummu Kecks +2",
+        legs="Malignance Tights",
         feet="Malignance Boots",
         neck="Loricate Torque +1",
         waist="Flume Belt +1",
@@ -584,6 +548,9 @@ function init_gear_sets()
 
     sets.engaged.Acc.PDT = sets.engaged.PDT
 
+    -- This set is if you have Haste 1
+    -- /NIN - DW 42
+    -- /DNC - DW 52
     sets.engaged.Haste_15 = {head={ name="Adhemar Bonnet +1", augments={'DEX+12','AGI+12','Accuracy+20',}},
         body={ name="Adhemar Jacket +1", augments={'DEX+12','AGI+12','Accuracy+20',}},
         hands={ name="Adhemar Wrist. +1", augments={'DEX+12','AGI+12','Accuracy+20',}},
@@ -614,6 +581,9 @@ function init_gear_sets()
 
     sets.engaged.Acc.Haste_15.PDT = sets.engaged.PDT
 
+    -- This is if you have a combination of Haste 2 or Bard Songs
+    -- /NIN - DW 31
+    -- /DNC - DW 41
     sets.engaged.Haste_30 = {head={ name="Adhemar Bonnet +1", augments={'DEX+12','AGI+12','Accuracy+20',}},
         body={ name="Adhemar Jacket +1", augments={'DEX+12','AGI+12','Accuracy+20',}},
         hands={ name="Adhemar Wrist. +1", augments={'DEX+12','AGI+12','Accuracy+20',}},
@@ -644,6 +614,9 @@ function init_gear_sets()
 
     sets.engaged.Acc.Haste_30.PDT = sets.engaged.PDT
 
+    -- Additional Combinations of Haste & Bard Songs or Dancer Haste Samba
+    -- /NIN - DW 25
+    -- /DNC - DW 35
     sets.engaged.Haste_35 = {head={ name="Adhemar Bonnet +1", augments={'DEX+12','AGI+12','Accuracy+20',}},
         body={ name="Adhemar Jacket +1", augments={'DEX+12','AGI+12','Accuracy+20',}},
         hands={ name="Adhemar Wrist. +1", augments={'DEX+12','AGI+12','Accuracy+20',}},
@@ -674,6 +647,10 @@ function init_gear_sets()
 
     sets.engaged.Acc.Haste_35.PDT = sets.engaged.PDT
 
+    -- This set will be put on if you have Max Haste from all Combinations 
+    	-- DO NOT GO MORE THAN THESE NUMBERS ARE YOU WILL HINDER YOUR TP GAIN
+    -- /NIN - DW 11
+    -- /DNC - DW 21
     sets.engaged.MaxHaste = {head={ name="Adhemar Bonnet +1", augments={'DEX+12','AGI+12','Accuracy+20',}},
         body={ name="Adhemar Jacket +1", augments={'DEX+12','AGI+12','Accuracy+20',}},
         hands={ name="Adhemar Wrist. +1", augments={'DEX+12','AGI+12','Accuracy+20',}},
@@ -704,7 +681,51 @@ function init_gear_sets()
 
     sets.engaged.Acc.MaxHaste.PDT = sets.engaged.PDT
 
-    sets.aftercast.TP = sets.engaged
+--------------------------------------------------------------------------------------------------------------------------
+--             IDLE SETS                 --
+--------------------------------------------------------------------------------------------------------------------------
+
+    sets.idle = {head={ name="Dampening Tam", augments={'DEX+7','Accuracy+12','Mag. Acc.+2','Quadruple Attack +1',}},
+        body="Malignance Tabard",
+        hands="Malignance Gloves",
+        legs={ name="Carmine Cuisses +1", augments={'Accuracy+20','Attack+12','"Dual Wield"+6',}},
+        feet="Malignance Boots",
+        neck="Loricate Torque +1",
+        waist="Flume Belt +1",
+        left_ear="Genmei Earring",
+        right_ear="Etiolation Earring",
+        left_ring="Defending Ring",
+        right_ring="Karieyh Ring",
+        back={ name="Camulus's Mantle", augments={'DEX+20','Accuracy+20 Attack+20','Accuracy+10','"Dual Wield"+10','Damage taken-5%',}},}
+
+
+    sets.idle.PDT = {head={ name="Dampening Tam", augments={'DEX+7','Accuracy+12','Mag. Acc.+2','Quadruple Attack +1',}},
+        body="Malignance Tabard",
+        hands="Malignance Gloves",
+        legs="Malignance Tights",
+        feet="Malignance Boots",
+        neck="Loricate Torque +1",
+        waist="Flume Belt +1",
+        left_ear="Genmei Earring",
+        right_ear="Etiolation Earring",
+        left_ring="Defending Ring",
+        right_ring="Karieyh Ring",
+        back={ name="Camulus's Mantle", augments={'DEX+20','Accuracy+20 Attack+20','Accuracy+10','"Dual Wield"+10','Damage taken-5%',}},}
+
+     sets.idle.Refresh = {head="Rawhide Mask",
+        body="Malignance Tabard",
+        hands="Malignance Gloves",
+        legs={ name="Rawhide Trousers", augments={'MP+50','"Fast Cast"+5','"Refresh"+1',}},
+        feet="Malignance Boots",
+        neck="Loricate Torque +1",
+        waist="Flume Belt +1",
+        left_ear="Genmei Earring",
+        right_ear="Etiolation Earring",
+        left_ring="Defending Ring",
+        right_ring="Karieyh Ring",
+        back={ name="Camulus's Mantle", augments={'DEX+20','Accuracy+20 Attack+20','Accuracy+10','"Dual Wield"+10','Damage taken-5%',}},}
+
+    sets.Kiting = {feet="Hermes' Sandals"}
     
 end
 
@@ -737,20 +758,14 @@ function job_precast(spell, action, spellMap, eventArgs)
             equip(sets.precast.RA)
             eventArgs.handled = true
         end
-    elseif spell.type == 'CorsairRoll' and state.LuzafRing.value then
-        equip(sets.precast.LuzafRing)
+    end
+    if spell.type == 'CorsairRoll' and state.LuzafRing.value then
+        equip(set_combine(sets.precast.CorsairRoll, sets.precast.LuzafRing))
     elseif spell.english == "Double-Up" then
         equip(sets.precast.DoubleUp)
             if state.LuzafRing.value then
-                equip(sets.precast.LuzafRing)
+                equip(set_combine(sets.precast.CorsairRoll, sets.precast.LuzafRing))
             end
-    elseif spell.type == 'CorsairShot' and state.CastingMode.value == 'Resistant' then
-        classes.CustomClass = 'Acc'
-    elseif spell.english == 'Fold' and buffactive['Bust'] == 2 then
-        if sets.precast.FoldDoubleBust then
-            equip(sets.precast.FoldDoubleBust)
-            eventArgs.handled = true
-        end
     end
 end
 
@@ -770,6 +785,15 @@ function job_post_precast(spell, action, spellMap, eventArgs)
         elseif spell.english == 'Wildfire' and (world.weather_element == 'Fire' or world.day_element == 'Fire') then
             equip(sets.Obi)
 			eventArgs.handled = true
+        end
+    end
+    if spell.type == 'CorsairShot' then
+        if (spell.english ~= 'Light Shot' and spell.english ~= 'Dark Shot') then
+            if state.QDmode.value == 'Normal' then
+                equip(sets.precast.CorsairShot)
+            elseif state.QDmode.value == 'Damage' then
+                equip(sets.precast.CorsairShot.Damage)
+            end
         end
     end
 end
@@ -809,16 +833,6 @@ function job_buff_change(buff, gain)
         end
     end
 end
-
--- function job_update(cmdParams, eventArgs)
---     update_combat_form()
--- end
-
--- function job_status_change(newStatus, oldStatus, eventArgs)
---     if newStatus == 'Engaged' then
---         update_combat_form()
---     end
--- end
 
 -------------------------------------------------------------------------------------------------------------------
 -- User code that supplements standard library decisions.
